@@ -1,0 +1,22 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+
+# next
+/.next/
+/out/
+
+# env
+.env*.local
+
+# debug
+npm-debug.log*
+
+# uploads & local data (optional: commit gallery.json template only)
+/public/uploads/*
+!/public/uploads/.gitkeep
+/data/products.json
+/data/categories.json
+/data/site-social.json
