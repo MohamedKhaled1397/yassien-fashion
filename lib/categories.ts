@@ -22,18 +22,26 @@ async function ensureDataDir() {
   await fs.mkdir(DATA_DIR, { recursive: true });
 }
 
+async function tryPersistSeed(): Promise<void> {
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    await fs.writeFile(DATA_FILE, JSON.stringify(SEED, null, 2), "utf-8");
+  } catch {
+    /* e.g. Vercel serverless: FS is read-only — keep in-memory seed */
+  }
+}
+
 export async function readCategories(): Promise<Category[]> {
-  await ensureDataDir();
   try {
     const raw = await fs.readFile(DATA_FILE, "utf-8");
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed) || parsed.length === 0) {
-      await fs.writeFile(DATA_FILE, JSON.stringify(SEED, null, 2), "utf-8");
+      await tryPersistSeed();
       return [...SEED];
     }
     return parsed as Category[];
   } catch {
-    await fs.writeFile(DATA_FILE, JSON.stringify(SEED, null, 2), "utf-8");
+    await tryPersistSeed();
     return [...SEED];
   }
 }

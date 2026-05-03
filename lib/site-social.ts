@@ -87,15 +87,23 @@ function normalizeStored(item: unknown): SiteSocial {
   };
 }
 
+async function tryPersistDefaultSocial(): Promise<void> {
+  try {
+    await fs.mkdir(DATA_DIR, { recursive: true });
+    await fs.writeFile(DATA_FILE, JSON.stringify(DEFAULT, null, 2), "utf-8");
+  } catch {
+    /* e.g. Vercel serverless: FS is read-only */
+  }
+}
+
 export async function readSiteSocial(): Promise<SiteSocial> {
-  await ensureDataDir();
   try {
     const raw = await fs.readFile(DATA_FILE, "utf-8");
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== "object") return { ...DEFAULT };
     return normalizeStored(parsed);
   } catch {
-    await fs.writeFile(DATA_FILE, JSON.stringify(DEFAULT, null, 2), "utf-8");
+    await tryPersistDefaultSocial();
     return { ...DEFAULT };
   }
 }
