@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getCategoryById } from "@/lib/categories";
 import { productImageSrc } from "@/lib/product-image-url";
 import { getProductById } from "@/lib/products";
+import { getWhatsAppStoreContext } from "@/lib/store-whatsapp-context";
 import { ProductDetailClient } from "./ProductDetailClient";
 
 export default async function ProductPage({
@@ -14,6 +15,7 @@ export default async function ProductPage({
   const product = await getProductById(id);
   if (!product) notFound();
   const category = await getCategoryById(product.categoryId);
+  const waCtx = await getWhatsAppStoreContext();
 
   return (
     <article className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14">
@@ -35,6 +37,8 @@ export default async function ProductPage({
         <ProductDetailClient
           product={product}
           categoryName={category?.name}
+          waDigits={waCtx.waDigits}
+          siteOrigin={waCtx.siteOrigin}
         />
       </div>
     </article>

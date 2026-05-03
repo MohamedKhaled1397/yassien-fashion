@@ -1,12 +1,35 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { STRINGS } from "@/lib/strings";
+import type { WhatsAppProductPayload } from "@/lib/whatsapp-product-link";
+import { buildProductWhatsAppUrl } from "@/lib/whatsapp-product-link";
 import { useStore } from "./StoreProviders";
 
-export function HeroSection() {
+export function HeroSection({
+  waDigits,
+  siteOrigin,
+  leadProduct,
+}: {
+  waDigits: string | null;
+  siteOrigin: string;
+  leadProduct: WhatsAppProductPayload | null;
+}) {
   const { lang } = useStore();
   const t = STRINGS[lang];
+
+  const shopNowHref = useMemo(() => {
+    if (!waDigits || !leadProduct) return null;
+    const origin =
+      siteOrigin.trim() ||
+      (typeof window !== "undefined" ? window.location.origin : "");
+    if (!origin) return null;
+    return buildProductWhatsAppUrl(waDigits, origin, leadProduct, lang);
+  }, [waDigits, siteOrigin, leadProduct, lang]);
+
+  const ctaClassName =
+    "mt-10 inline-flex items-center justify-center bg-stone-900 px-10 py-4 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200";
 
   return (
     <section className="mx-auto max-w-6xl px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-14">
@@ -17,12 +40,20 @@ export function HeroSection() {
         <p className="mt-6 max-w-2xl text-xs font-medium uppercase leading-relaxed tracking-[0.25em] text-stone-600 dark:text-stone-400 sm:text-sm">
           {t.heroSubtitle}
         </p>
-        <Link
-          href="/shop"
-          className="mt-10 inline-flex items-center justify-center bg-stone-900 px-10 py-4 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:bg-stone-800 dark:bg-white dark:text-stone-900 dark:hover:bg-stone-200"
-        >
-          {t.shopNow}
-        </Link>
+        {shopNowHref ? (
+          <a
+            href={shopNowHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={ctaClassName}
+          >
+            {t.shopNow}
+          </a>
+        ) : (
+          <Link href="/shop" className={ctaClassName}>
+            {t.shopNow}
+          </Link>
+        )}
       </div>
     </section>
   );

@@ -25,6 +25,7 @@ export const STRINGS: Record<
     noProducts: string;
     view: string;
     currency: string;
+    whatsAppCta: string;
   }
 > = {
   en: {
@@ -51,6 +52,7 @@ export const STRINGS: Record<
     noProducts: "No products yet. Check back soon.",
     view: "View",
     currency: "LE",
+    whatsAppCta: "WhatsApp",
   },
   ar: {
     home: "الرئيسية",
@@ -76,5 +78,6 @@ export const STRINGS: Record<
     noProducts: "لا توجد منتجات بعد. عد لاحقاً.",
     view: "عرض",
     currency: "ج.م",
+    whatsAppCta: "واتساب",
   },
 };
