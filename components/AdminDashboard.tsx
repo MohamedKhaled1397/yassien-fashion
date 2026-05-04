@@ -209,14 +209,14 @@ function AddProductForm({
         </div>
         <div>
           <label className="text-xs font-semibold uppercase tracking-widest text-stone-500">
-            Price
+            Price <span className="font-normal opacity-70">(optional)</span>
           </label>
           <input
             name="price"
             type="number"
             step="0.01"
             min={0}
-            required
+            placeholder="Leave empty for no price"
             className="mt-1 w-full rounded-lg border border-stone-200 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
           />
         </div>
@@ -376,7 +376,8 @@ function AdminProductRow({
           <p className="text-sm text-stone-500 dark:text-stone-400">
             {categories.find((c) => c.id === product.categoryId)?.name ??
               product.categoryId}{" "}
-            · {product.price} · {product.featured ? "Featured" : "Not featured"} ·{" "}
+            · {product.price ?? "No price"} ·{" "}
+            {product.featured ? "Featured" : "Not featured"} ·{" "}
             {product.newArrival ? "New arrival" : "Not new arrival"}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -422,14 +423,16 @@ function AdminProductRow({
             />
           </div>
           <div>
-            <label className="text-xs text-stone-500">Price</label>
+            <label className="text-xs text-stone-500">
+              Price <span className="opacity-70">(optional)</span>
+            </label>
             <input
               name="price"
               type="number"
               step="0.01"
               min={0}
-              defaultValue={product.price}
-              required
+              defaultValue={product.price ?? ""}
+              placeholder="Empty = no price"
               className="mt-1 w-full rounded border border-stone-200 px-2 py-1 dark:border-zinc-700 dark:bg-zinc-950"
             />
           </div>

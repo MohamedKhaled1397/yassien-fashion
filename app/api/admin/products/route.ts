@@ -61,10 +61,23 @@ export async function POST(request: Request) {
       ? descriptionRaw.trim().slice(0, 4000)
       : "";
 
-  const priceNum =
-    typeof priceRaw === "string" ? Number.parseFloat(priceRaw) : Number.NaN;
-  if (!Number.isFinite(priceNum) || priceNum < 0) {
-    return NextResponse.json({ error: "Valid price is required." }, { status: 400 });
+  const priceTrimmed =
+    typeof priceRaw === "string" ? priceRaw.trim() : "";
+  let price: number | null;
+  if (priceTrimmed === "") {
+    price = null;
+  } else {
+    const priceNum = Number.parseFloat(priceTrimmed);
+    if (!Number.isFinite(priceNum) || priceNum < 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Price must be a valid non-negative number, or leave blank for no price.",
+        },
+        { status: 400 },
+      );
+    }
+    price = Math.round(priceNum * 100) / 100;
   }
 
   const featured =
@@ -103,7 +116,7 @@ export async function POST(request: Request) {
     id,
     name,
     description,
-    price: Math.round(priceNum * 100) / 100,
+    price,
     imageFilename,
     featured,
     newArrival,

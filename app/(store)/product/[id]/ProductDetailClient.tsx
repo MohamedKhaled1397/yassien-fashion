@@ -20,10 +20,12 @@ export function ProductDetailClient({
 }) {
   const { lang } = useStore();
   const t = STRINGS[lang];
-  const price =
-    lang === "ar"
-      ? `${product.price.toLocaleString("ar-SA", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${t.currency}`
-      : `${t.currency} ${product.price.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  const priceLabel =
+    product.price === null
+      ? t.priceOnRequest
+      : lang === "ar"
+        ? `${product.price.toLocaleString("ar-SA", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${t.currency}`
+        : `${t.currency} ${product.price.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
   const shopNowHref = useMemo(() => {
     if (!waDigits) return null;
@@ -56,7 +58,7 @@ export function ProductDetailClient({
         {product.name}
       </h1>
       <p className="mt-4 text-lg font-medium text-stone-800 dark:text-stone-200">
-        {price}
+        {priceLabel}
       </p>
       {categoryName ? (
         <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.25em] text-stone-400 dark:text-stone-500">

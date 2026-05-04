@@ -12,7 +12,8 @@ export type Product = {
   id: string;
   name: string;
   description: string;
-  price: number;
+  /** `null` = no price shown (e.g. contact for price). */
+  price: number | null;
   imageFilename: string;
   featured: boolean;
   /** Shown on /new-arrivals when true (set from admin). */
@@ -29,6 +30,19 @@ async function ensureDataDir() {
   await fs.mkdir(DATA_DIR, { recursive: true });
 }
 
+function normalizePrice(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const s = value.trim();
+    if (s === "") return null;
+    const n = Number.parseFloat(s);
+    return Number.isFinite(n) ? n : null;
+  }
+  const n = Number.parseFloat(String(value));
+  return Number.isFinite(n) ? n : null;
+}
+
 function normalizeProduct(item: unknown): Product {
   const p = item as Record<string, unknown>;
   const categoryId =
@@ -39,10 +53,7 @@ function normalizeProduct(item: unknown): Product {
     id: String(p.id ?? ""),
     name: String(p.name ?? "Untitled"),
     description: String(p.description ?? ""),
-    price:
-      typeof p.price === "number" && Number.isFinite(p.price)
-        ? p.price
-        : Number.parseFloat(String(p.price)) || 0,
+    price: normalizePrice(p.price),
     imageFilename: String(p.imageFilename ?? ""),
     featured: Boolean(p.featured),
     newArrival: Boolean(p.newArrival),
@@ -122,4 +133,31 @@ export async function deleteProduct(id: string): Promise<Product | null> {
   const [removed] = items.splice(idx, 1);
   await writeProducts(items);
   return removed ?? null;
+}
+
+/** Sort key so `null` prices sort last in ascending order and last in descending order. */
+function priceSortKeyAsc(p: number | null): number {
+  return p === null ? Number.POSITIVE_INFINITY : p;
+}
+
+function priceSortKeyDesc(p: number | null): number {
+  return p === null ? Number.NEGATIVE_INFINITY : p;
+}
+
+export function sortProductsList<T extends Product>(items: T[], sort: ProductSort): T[] {
+  const copy = [...items];
+  if (sort === "price-asc") {
+    copy.sort(
+      (a, b) => priceSortKeyAsc(a.price) - priceSortKeyAsc(b.price),
+    );
+  } else if (sort === "price-desc") {
+    copy.sort(
+      (a, b) => priceSortKeyDesc(b.price) - priceSortKeyDesc(a.price),
+    );
+  } else if (sort === "name") {
+    copy.sort((a, b) => a.name.localeCompare(b.name));
+  } else {
+    copy.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
+  }
+  return copy;
 }

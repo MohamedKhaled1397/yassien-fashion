@@ -9,7 +9,13 @@ import type { WhatsAppProductPayload } from "@/lib/whatsapp-product-link";
 import { buildProductWhatsAppUrl } from "@/lib/whatsapp-product-link";
 import { useStore } from "./StoreProviders";
 
-function formatMoney(price: number, lang: Lang, currencyLabel: string) {
+function formatProductPrice(
+  price: number | null,
+  lang: Lang,
+  currencyLabel: string,
+  priceOnRequest: string,
+) {
+  if (price === null) return priceOnRequest;
   if (lang === "ar") {
     return `${price.toLocaleString("ar-SA", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${currencyLabel}`;
   }
@@ -91,7 +97,7 @@ export function ProductGrid({
                   {p.description}
                 </p>
                 <p className="pt-2 font-medium text-stone-800 dark:text-stone-200">
-                  {formatMoney(p.price, lang, t.currency)}
+                  {formatProductPrice(p.price, lang, t.currency, t.priceOnRequest)}
                 </p>
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
                   <Link

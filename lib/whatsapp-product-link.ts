@@ -35,7 +35,7 @@ export function digitsFromSocialWhatsApp(whatsapp: string): string | null {
 export type WhatsAppProductPayload = {
   id: string;
   name: string;
-  price: number;
+  price: number | null;
   imageFilename: string;
 };
 
@@ -53,11 +53,17 @@ export function buildProductWhatsAppUrl(
 
   let msg: string;
   if (lang === "ar") {
-    msg = `مرحباً، أود الاستفسار عن هذا المنتج:\n${product.name}\nالسعر: ${product.price}`;
+    msg = `مرحباً، أود الاستفسار عن هذا المنتج:\n${product.name}`;
+    if (product.price !== null) {
+      msg += `\nالسعر: ${product.price}`;
+    }
     if (imagePath) msg += `\nصورة المنتج: ${imagePath}`;
     msg += `\nرابط الصفحة: ${productUrl}`;
   } else {
-    msg = `Hi, I'm interested in this product:\n${product.name}\nPrice: ${product.price}`;
+    msg = `Hi, I'm interested in this product:\n${product.name}`;
+    if (product.price !== null) {
+      msg += `\nPrice: ${product.price}`;
+    }
     if (imagePath) msg += `\nProduct photo: ${imagePath}`;
     msg += `\nPage: ${productUrl}`;
   }

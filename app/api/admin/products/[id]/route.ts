@@ -57,7 +57,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
   const patch: Partial<{
     name: string;
     description: string;
-    price: number;
+    price: number | null;
     featured: boolean;
     newArrival: boolean;
     imageFilename: string;
@@ -77,11 +77,22 @@ export async function PATCH(request: Request, ctx: Ctx) {
   }
 
   if (typeof priceRaw === "string") {
-    const priceNum = Number.parseFloat(priceRaw);
-    if (!Number.isFinite(priceNum) || priceNum < 0) {
-      return NextResponse.json({ error: "Valid price is required." }, { status: 400 });
+    const trimmed = priceRaw.trim();
+    if (trimmed === "") {
+      patch.price = null;
+    } else {
+      const priceNum = Number.parseFloat(trimmed);
+      if (!Number.isFinite(priceNum) || priceNum < 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Price must be a valid non-negative number, or leave blank for no price.",
+          },
+          { status: 400 },
+        );
+      }
+      patch.price = Math.round(priceNum * 100) / 100;
     }
-    patch.price = Math.round(priceNum * 100) / 100;
   }
 
   if (featuredRaw !== null && featuredRaw !== undefined) {

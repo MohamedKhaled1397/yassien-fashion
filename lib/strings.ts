@@ -26,6 +26,7 @@ export const STRINGS: Record<
     view: string;
     currency: string;
     whatsAppCta: string;
+    priceOnRequest: string;
   }
 > = {
   en: {
@@ -53,6 +54,7 @@ export const STRINGS: Record<
     view: "View",
     currency: "LE",
     whatsAppCta: "WhatsApp",
+    priceOnRequest: "Price on request",
   },
   ar: {
     home: "الرئيسية",
@@ -79,5 +81,6 @@ export const STRINGS: Record<
     view: "عرض",
     currency: "ج.م",
     whatsAppCta: "واتساب",
+    priceOnRequest: "السعر عند الطلب",
   },
 };

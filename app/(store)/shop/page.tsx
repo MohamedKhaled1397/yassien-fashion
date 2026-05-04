@@ -1,21 +1,8 @@
 import { categoryLabelMap, readCategories } from "@/lib/categories";
 import { ProductGrid } from "@/components/ProductGrid";
-import { readProducts } from "@/lib/products";
+import { readProducts, sortProductsList, type ProductSort } from "@/lib/products";
 import { getWhatsAppStoreContext } from "@/lib/store-whatsapp-context";
-import type { ProductSort } from "@/lib/products";
 import { ShopToolbar } from "./ShopToolbar";
-
-function sortProducts<T extends { price: number; name: string; createdAt: string }>(
-  items: T[],
-  sort: ProductSort,
-): T[] {
-  const copy = [...items];
-  if (sort === "price-asc") copy.sort((a, b) => a.price - b.price);
-  else if (sort === "price-desc") copy.sort((a, b) => b.price - a.price);
-  else if (sort === "name") copy.sort((a, b) => a.name.localeCompare(b.name));
-  else copy.sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt));
-  return copy;
-}
 
 export default async function ShopPage({
   searchParams,
@@ -41,7 +28,7 @@ export default async function ShopPage({
   const filtered = activeCategoryId
     ? all.filter((p) => p.categoryId === activeCategoryId)
     : all;
-  const products = sortProducts(filtered, sort);
+  const products = sortProductsList(filtered, sort);
   const categoryLabels = categoryLabelMap(categories);
   const waCtx = await getWhatsAppStoreContext();
 
