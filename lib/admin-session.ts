@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
-export const ADMIN_COOKIE = "yassien_admin";
+export const ADMIN_COOKIE = "yassin_admin";
 
 function getSecret(): string {
   return process.env.ADMIN_SECRET || "dev-only-set-admin-secret-in-env";

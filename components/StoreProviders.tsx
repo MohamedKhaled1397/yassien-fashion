@@ -22,8 +22,8 @@ type Ctx = {
 
 const StoreContext = createContext<Ctx | null>(null);
 
-const LANG_KEY = "yassien_lang";
-const THEME_KEY = "yassien_theme";
+const LANG_KEY = "yassin_lang";
+const THEME_KEY = "yassin_theme";
 
 export function StoreProviders({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en");

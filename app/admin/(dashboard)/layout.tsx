@@ -18,7 +18,7 @@ export default async function AdminDashboardLayout({
     <div className="min-h-screen bg-stone-100 text-stone-900 dark:bg-zinc-950 dark:text-zinc-50">
       <header className="border-b border-stone-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <span className="font-serif text-lg tracking-wide">Yassien Fashion — Admin</span>
+          <span className="font-serif text-lg tracking-wide">Yassin Fashion — Admin</span>
           <nav className="flex items-center gap-6 text-sm font-medium">
             <Link href="/" className="text-stone-600 hover:text-stone-900 dark:text-zinc-400 dark:hover:text-white">
               View storefront

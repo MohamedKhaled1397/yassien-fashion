@@ -56,7 +56,7 @@ export default function AdminLoginPage() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-stone-100 px-4 dark:bg-zinc-950">
       <div className="w-full max-w-md rounded-2xl border border-stone-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <h1 className="text-center font-serif text-xl tracking-wide text-stone-900 dark:text-stone-100 sm:text-2xl">
-          Yassien Fashion
+          Yassin Fashion
         </h1>
         <p className="mt-2 text-center text-sm text-stone-500 dark:text-stone-400">
           Admin sign in

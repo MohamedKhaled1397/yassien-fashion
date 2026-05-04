@@ -35,7 +35,7 @@ export const STRINGS: Record<
     categoriesIntro: "Choose a category to see matching products in the shop.",
     newArrivals: "New Arrivals",
     admin: "Admin",
-    heroTitle: "YASSIEN FASHION",
+    heroTitle: "YASSIN FASHION",
     heroSubtitle:
       "CURATED APPAREL AND ACCESSORIES — ELEVATED STYLE, THOUGHTFUL DETAIL, AND A WARDROBE THAT MOVES WITH YOU.",
     shopNow: "SHOP NOW",
@@ -61,7 +61,7 @@ export const STRINGS: Record<
     categoriesIntro: "اختر تصنيفاً لعرض المنتجات المناسبة في المتجر.",
     newArrivals: "وصل حديثاً",
     admin: "الإدارة",
-    heroTitle: "ياسين فاشن",
+    heroTitle: "ياسين فاشون",
     heroSubtitle:
       "أزياء وإكسسوارات مختارة — أسلوب راقٍ وتفاصيل مدروسة وخزانة تناسب يومك.",
     shopNow: "تسوق الآن",

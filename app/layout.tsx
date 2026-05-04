@@ -28,7 +28,7 @@ const arabic = Noto_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "Yassien Fashion",
+  title: "Yassin Fashion",
   description: "Curated apparel and accessories — elevated everyday style.",
 };
 

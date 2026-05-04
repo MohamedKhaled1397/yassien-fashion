@@ -44,7 +44,7 @@ export function SiteHeader({ social }: { social: SiteSocial }) {
           href="/"
           className="text-center font-serif text-base font-medium tracking-[0.12em] text-stone-900 dark:text-stone-50 sm:text-lg md:absolute md:left-1/2 md:-translate-x-1/2 md:text-xl"
         >
-          Yassien Fashion
+          Yassin Fashion
         </Link>
 
         <div className="flex flex-1 items-center justify-end gap-2 sm:gap-3">

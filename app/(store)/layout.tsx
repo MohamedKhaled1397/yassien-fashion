@@ -17,7 +17,7 @@ export default async function StoreLayout({
       <footer className="border-t border-stone-200/80 py-10 dark:border-stone-800">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 sm:flex-row sm:justify-between sm:px-6">
           <p className="text-center text-[10px] uppercase tracking-[0.35em] text-stone-400 dark:text-stone-600">
-            Yassien Fashion · {new Date().getFullYear()}
+            Yassin Fashion · {new Date().getFullYear()}
           </p>
           <SocialLinks social={social} />
         </div>
