@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 export default function AdminLoginPage() {
   const router = useRouter();
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +35,12 @@ export default function AdminLoginPage() {
       });
       const data = (await res.json()) as { error?: string };
       if (!res.ok) {
-        setError(data.error ?? "Login failed");
+        const base = data.error ?? "Login failed";
+        setError(
+          res.status === 401
+            ? `${base} Use the exact value of ADMIN_PASSWORD for this environment (e.g. .env.local locally, or Vercel env vars in production).`
+            : base,
+        );
         return;
       }
       router.push("/admin");
@@ -65,13 +71,22 @@ export default function AdminLoginPage() {
             </label>
             <input
               id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-stone-900 outline-none ring-stone-900 focus:ring-2 dark:border-zinc-700 dark:bg-zinc-950 dark:text-stone-100 dark:ring-white"
               required
             />
+            <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-stone-600 dark:text-stone-400">
+              <input
+                type="checkbox"
+                checked={showPassword}
+                onChange={(e) => setShowPassword(e.target.checked)}
+                className="rounded border-stone-300"
+              />
+              Show password
+            </label>
           </div>
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400">{error}</p>

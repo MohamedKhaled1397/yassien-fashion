@@ -42,14 +42,40 @@ export function verifySession(token: string | undefined): boolean {
   }
 }
 
+/** Normalize value from .env / hosting UI (quotes, BOM, stray whitespace). */
+export function normalizeAdminPasswordFromEnv(raw: string): string {
+  let s = raw.replace(/^\uFEFF/, "").trim();
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    s = s.slice(1, -1).trim();
+  }
+  return s;
+}
+
+export function isAdminPasswordConfigured(): boolean {
+  const v = process.env.ADMIN_PASSWORD;
+  return typeof v === "string" && normalizeAdminPasswordFromEnv(v).length > 0;
+}
+
 export function checkAdminPassword(password: string): boolean {
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected || expected.length < 1) {
+  const raw = process.env.ADMIN_PASSWORD;
+  if (typeof raw !== "string") {
     console.warn(
       "ADMIN_PASSWORD is not set; login disabled until configured in .env.local.",
     );
     return false;
   }
-  if (password.length !== expected.length) return false;
-  return timingSafeEqual(Buffer.from(password), Buffer.from(expected));
+  const expected = normalizeAdminPasswordFromEnv(raw);
+  if (expected.length < 1) {
+    console.warn("ADMIN_PASSWORD is empty after normalization.");
+    return false;
+  }
+  const attempt =
+    typeof password === "string" ? password.trim() : String(password ?? "").trim();
+  const a = Buffer.from(attempt, "utf8");
+  const b = Buffer.from(expected, "utf8");
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 }
