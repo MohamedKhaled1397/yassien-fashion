@@ -28,17 +28,23 @@ export async function GET(
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
       return new Response("Not found", { status: 404 });
     }
-    const result = await get(pathname, { access: "private", useCache: true });
-    if (!result || result.statusCode !== 200 || !result.stream) {
+    try {
+      // useCache: false avoids edge/CDN oddities with private blobs (see @vercel/blob docs).
+      const result = await get(pathname, { access: "private", useCache: false });
+      if (!result || result.statusCode !== 200 || !result.stream) {
+        return new Response("Not found", { status: 404 });
+      }
+      return new Response(result.stream, {
+        headers: {
+          "Content-Type": result.blob.contentType,
+          "Cache-Control": "public, max-age=86400",
+          "X-Content-Type-Options": "nosniff",
+        },
+      });
+    } catch (err) {
+      console.error("[uploads] blob get failed", pathname, err);
       return new Response("Not found", { status: 404 });
     }
-    return new Response(result.stream, {
-      headers: {
-        "Content-Type": result.blob.contentType,
-        "Cache-Control": "public, max-age=86400",
-        "X-Content-Type-Options": "nosniff",
-      },
-    });
   }
 
   if (!SAFE_UPLOAD_NAME.test(name) || name.includes("..")) {
