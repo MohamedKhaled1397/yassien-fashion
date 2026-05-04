@@ -1,5 +1,10 @@
 import { promises as fs } from "fs";
 import path from "path";
+import {
+  isBlobJsonPersistence,
+  readBlobJsonText,
+  writeBlobJsonText,
+} from "@/lib/vercel-blob-json";
 
 export type ProductSort = "newest" | "price-asc" | "price-desc" | "name";
 
@@ -18,6 +23,7 @@ export type Product = {
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "products.json");
+const BLOB_FILE = "products.json";
 
 async function ensureDataDir() {
   await fs.mkdir(DATA_DIR, { recursive: true });
@@ -46,6 +52,19 @@ function normalizeProduct(item: unknown): Product {
 }
 
 export async function readProducts(): Promise<Product[]> {
+  if (isBlobJsonPersistence()) {
+    try {
+      const raw = await readBlobJsonText(BLOB_FILE);
+      if (raw !== null) {
+        const parsed = JSON.parse(raw) as unknown;
+        if (Array.isArray(parsed)) {
+          return parsed.map((row) => normalizeProduct(row));
+        }
+      }
+    } catch {
+      /* fall through to FS */
+    }
+  }
   try {
     const raw = await fs.readFile(DATA_FILE, "utf-8");
     const parsed = JSON.parse(raw) as unknown;
@@ -57,8 +76,19 @@ export async function readProducts(): Promise<Product[]> {
 }
 
 export async function writeProducts(items: Product[]): Promise<void> {
-  await ensureDataDir();
-  await fs.writeFile(DATA_FILE, JSON.stringify(items, null, 2), "utf-8");
+  const json = JSON.stringify(items, null, 2);
+  if (isBlobJsonPersistence()) {
+    await writeBlobJsonText(BLOB_FILE, json);
+    return;
+  }
+  try {
+    await ensureDataDir();
+    await fs.writeFile(DATA_FILE, json, "utf-8");
+  } catch {
+    throw new Error(
+      "Cannot save products on this host (filesystem is read-only). On Vercel: connect Vercel Blob so BLOB_READ_WRITE_TOKEN is set, then redeploy.",
+    );
+  }
 }
 
 export async function getProductById(id: string): Promise<Product | null> {

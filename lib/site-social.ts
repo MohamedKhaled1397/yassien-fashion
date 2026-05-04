@@ -1,5 +1,10 @@
 import { promises as fs } from "fs";
 import path from "path";
+import {
+  isBlobJsonPersistence,
+  readBlobJsonText,
+  writeBlobJsonText,
+} from "@/lib/vercel-blob-json";
 
 export type SiteSocial = {
   whatsapp: string;
@@ -9,6 +14,7 @@ export type SiteSocial = {
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "site-social.json");
+const BLOB_FILE = "site-social.json";
 
 const DEFAULT: SiteSocial = {
   whatsapp: "",
@@ -97,6 +103,19 @@ async function tryPersistDefaultSocial(): Promise<void> {
 }
 
 export async function readSiteSocial(): Promise<SiteSocial> {
+  if (isBlobJsonPersistence()) {
+    try {
+      const raw = await readBlobJsonText(BLOB_FILE);
+      if (raw !== null) {
+        const parsed = JSON.parse(raw) as unknown;
+        if (parsed && typeof parsed === "object") {
+          return normalizeStored(parsed);
+        }
+      }
+    } catch {
+      /* fall through to FS / default */
+    }
+  }
   try {
     const raw = await fs.readFile(DATA_FILE, "utf-8");
     const parsed = JSON.parse(raw) as unknown;
@@ -109,6 +128,17 @@ export async function readSiteSocial(): Promise<SiteSocial> {
 }
 
 export async function writeSiteSocial(social: SiteSocial): Promise<void> {
-  await ensureDataDir();
-  await fs.writeFile(DATA_FILE, JSON.stringify(social, null, 2), "utf-8");
+  const json = JSON.stringify(social, null, 2);
+  if (isBlobJsonPersistence()) {
+    await writeBlobJsonText(BLOB_FILE, json);
+    return;
+  }
+  try {
+    await ensureDataDir();
+    await fs.writeFile(DATA_FILE, json, "utf-8");
+  } catch {
+    throw new Error(
+      "Cannot save site links on this host (filesystem is read-only). On Vercel: connect Vercel Blob so BLOB_READ_WRITE_TOKEN is set, then redeploy.",
+    );
+  }
 }

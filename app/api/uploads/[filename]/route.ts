@@ -1,6 +1,12 @@
+import { get } from "@vercel/blob";
 import { promises as fs } from "fs";
 import path from "path";
-import { MAX_IMAGE_BYTES, sniffedMimeFromBuffer } from "@/lib/image-upload";
+import {
+  blobPathnameFromStoredRef,
+  isBlobStoredProductImage,
+  MAX_IMAGE_BYTES,
+  sniffedMimeFromBuffer,
+} from "@/lib/image-upload";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
 
@@ -13,6 +19,28 @@ export async function GET(
 ) {
   const { filename: raw } = await context.params;
   const name = decodeURIComponent(raw);
+
+  if (name.startsWith("blob:") && isBlobStoredProductImage(name)) {
+    const pathname = blobPathnameFromStoredRef(name);
+    if (!pathname || pathname.includes("..")) {
+      return new Response("Bad request", { status: 400 });
+    }
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return new Response("Not found", { status: 404 });
+    }
+    const result = await get(pathname, { access: "private", useCache: true });
+    if (!result || result.statusCode !== 200 || !result.stream) {
+      return new Response("Not found", { status: 404 });
+    }
+    return new Response(result.stream, {
+      headers: {
+        "Content-Type": result.blob.contentType,
+        "Cache-Control": "public, max-age=86400",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  }
+
   if (!SAFE_UPLOAD_NAME.test(name) || name.includes("..")) {
     return new Response("Bad request", { status: 400 });
   }

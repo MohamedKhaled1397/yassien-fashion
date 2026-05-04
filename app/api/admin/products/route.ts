@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { readCategories } from "@/lib/categories";
 import { ADMIN_COOKIE, verifySession } from "@/lib/admin-session";
 import { getCookieValue } from "@/lib/cookies";
-import { saveUploadedImage } from "@/lib/image-upload";
+import {
+  saveUploadedImage,
+  storedRefFromBlobPathname,
+  verifyUploadedProductBlobPathname,
+} from "@/lib/image-upload";
 import { addProduct } from "@/lib/products";
 
 async function categoryExists(id: string): Promise<boolean> {
@@ -28,6 +32,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
   }
 
+  const imagePathnameRaw = formData.get("imagePathname");
   const file = formData.get("image");
   const nameRaw = formData.get("name");
   const descriptionRaw = formData.get("description");
@@ -72,16 +77,25 @@ export async function POST(request: Request) {
     newArrivalRaw === "on" ||
     newArrivalRaw === "1";
 
-  if (!(file instanceof File)) {
-    return NextResponse.json({ error: "Image is required." }, { status: 400 });
-  }
-
   let imageFilename: string;
-  try {
-    imageFilename = await saveUploadedImage(file);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Upload failed";
-    return NextResponse.json({ error: msg }, { status: 400 });
+  if (typeof imagePathnameRaw === "string" && imagePathnameRaw.trim()) {
+    const pathname = imagePathnameRaw.trim();
+    if (!(await verifyUploadedProductBlobPathname(pathname))) {
+      return NextResponse.json(
+        { error: "Invalid or missing uploaded image." },
+        { status: 400 },
+      );
+    }
+    imageFilename = storedRefFromBlobPathname(pathname);
+  } else if (file instanceof File && file.size > 0) {
+    try {
+      imageFilename = await saveUploadedImage(file);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Upload failed";
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+  } else {
+    return NextResponse.json({ error: "Image is required." }, { status: 400 });
   }
 
   const id = crypto.randomUUID();
@@ -97,6 +111,14 @@ export async function POST(request: Request) {
     createdAt: new Date().toISOString(),
   };
 
-  await addProduct(product);
-  return NextResponse.json({ ok: true, product });
+  try {
+    await addProduct(product);
+    return NextResponse.json({ ok: true, product });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Save failed." },
+      { status: 500 },
+    );
+  }
 }

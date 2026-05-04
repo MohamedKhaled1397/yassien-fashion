@@ -25,7 +25,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Name is required." }, { status: 400 });
   }
 
-  const category = await addCategory(name);
-  const items = await readCategories();
-  return NextResponse.json({ ok: true, category, items });
+  try {
+    const category = await addCategory(name);
+    const items = await readCategories();
+    return NextResponse.json({ ok: true, category, items });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Save failed." },
+      { status: 500 },
+    );
+  }
 }

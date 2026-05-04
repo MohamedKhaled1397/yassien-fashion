@@ -9,6 +9,48 @@ import type { SiteSocial } from "@/lib/site-social";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+type BlobPreflight =
+  | { kind: "blob"; pathname: string }
+  | { kind: "useFormFile" }
+  | { kind: "error"; message: string };
+
+/** Streams the file to Blob when `BLOB_READ_WRITE_TOKEN` is set; otherwise returns `useFormFile`. */
+async function preflightProductImageToBlobIfAvailable(
+  file: File,
+): Promise<BlobPreflight> {
+  const res = await fetch(
+    `/api/admin/product-image/upload?filename=${encodeURIComponent(file.name)}`,
+    {
+      method: "POST",
+      body: file,
+      credentials: "same-origin",
+    },
+  );
+
+  if (res.status === 501) {
+    return { kind: "useFormFile" };
+  }
+
+  let data: { pathname?: string; error?: string };
+  try {
+    data = (await res.json()) as { pathname?: string; error?: string };
+  } catch {
+    return { kind: "error", message: "Image upload failed." };
+  }
+
+  if (!res.ok) {
+    return {
+      kind: "error",
+      message: data.error ?? "Image upload failed.",
+    };
+  }
+  if (!data.pathname) {
+    return { kind: "error", message: "Image upload failed." };
+  }
+
+  return { kind: "blob", pathname: data.pathname };
+}
+
 export function AdminDashboard({
   initialProducts,
   initialCategories,
@@ -105,8 +147,21 @@ function AddProductForm({
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
-    const fd = new FormData(form);
     setLoading(true);
+    const fd = new FormData(form);
+    const imageField = fd.get("image");
+    if (imageField instanceof File && imageField.size > 0) {
+      const up = await preflightProductImageToBlobIfAvailable(imageField);
+      if (up.kind === "error") {
+        onError(up.message);
+        setLoading(false);
+        return;
+      }
+      if (up.kind === "blob") {
+        fd.delete("image");
+        fd.set("imagePathname", up.pathname);
+      }
+    }
     try {
       const res = await fetch("/api/admin/products", {
         method: "POST",
@@ -254,6 +309,18 @@ function AdminProductRow({
     e.preventDefault();
     const form = e.currentTarget;
     const fd = new FormData(form);
+    const imageField = fd.get("image");
+    if (imageField instanceof File && imageField.size > 0) {
+      const up = await preflightProductImageToBlobIfAvailable(imageField);
+      if (up.kind === "error") {
+        onError(up.message);
+        return;
+      }
+      if (up.kind === "blob") {
+        fd.delete("image");
+        fd.set("imagePathname", up.pathname);
+      }
+    }
     try {
       const res = await fetch(`/api/admin/products/${product.id}`, {
         method: "PATCH",

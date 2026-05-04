@@ -30,6 +30,14 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
-  await writeSiteSocial(parsed.value);
-  return NextResponse.json({ ok: true, social: parsed.value });
+  try {
+    await writeSiteSocial(parsed.value);
+    return NextResponse.json({ ok: true, social: parsed.value });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Save failed." },
+      { status: 500 },
+    );
+  }
 }

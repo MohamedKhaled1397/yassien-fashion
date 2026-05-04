@@ -31,12 +31,20 @@ export async function PATCH(request: Request, ctx: Ctx) {
   if (!name) {
     return NextResponse.json({ error: "Name is required." }, { status: 400 });
   }
-  const category = await updateCategory(id, name);
-  if (!category) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  try {
+    const category = await updateCategory(id, name);
+    if (!category) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    const items = await readCategories();
+    return NextResponse.json({ ok: true, category, items });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Save failed." },
+      { status: 500 },
+    );
   }
-  const items = await readCategories();
-  return NextResponse.json({ ok: true, category, items });
 }
 
 export async function DELETE(_request: Request, ctx: Ctx) {
@@ -47,10 +55,18 @@ export async function DELETE(_request: Request, ctx: Ctx) {
   if (!verifySession(token)) return unauthorized();
 
   const { id } = await ctx.params;
-  const result = await deleteCategory(id);
-  if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 400 });
+  try {
+    const result = await deleteCategory(id);
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+    const items = await readCategories();
+    return NextResponse.json({ ok: true, items });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Save failed." },
+      { status: 500 },
+    );
   }
-  const items = await readCategories();
-  return NextResponse.json({ ok: true, items });
 }

@@ -1,8 +1,51 @@
+import { BlobNotFoundError, del, head, put } from "@vercel/blob";
 import { promises as fs } from "fs";
 import path from "path";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads");
+
+/** Private blob pathnames for product photos (see `app/api/admin/product-image/upload`). */
+export const PRODUCT_IMAGE_BLOB_PREFIX = "me5a-product-images";
+
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
+function hasBlobTokenForProductImages(): boolean {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
+export function isBlobStoredProductImage(stored: string): boolean {
+  const s = stored.trim();
+  return s.startsWith(`blob:${PRODUCT_IMAGE_BLOB_PREFIX}/`);
+}
+
+export function blobPathnameFromStoredRef(stored: string): string | null {
+  if (!isBlobStoredProductImage(stored)) return null;
+  return stored.slice("blob:".length);
+}
+
+export function storedRefFromBlobPathname(pathname: string): string {
+  return `blob:${pathname}`;
+}
+
+export function isSafeProductImageBlobPathname(pathname: string): boolean {
+  return new RegExp(
+    `^${PRODUCT_IMAGE_BLOB_PREFIX}/[a-f0-9-]+\\.(jpg|png|gif|webp)$`,
+    "i",
+  ).test(pathname);
+}
+
+export async function verifyUploadedProductBlobPathname(
+  pathname: string,
+): Promise<boolean> {
+  if (!isSafeProductImageBlobPathname(pathname)) return false;
+  try {
+    await head(pathname);
+    return true;
+  } catch (e) {
+    if (e instanceof BlobNotFoundError) return false;
+    throw e;
+  }
+}
 
 /** Declared MIME we accept before sniffing bytes (empty = let sniff decide). */
 const ALLOWED_CLAIM = new Set([
@@ -85,19 +128,21 @@ export function validateImage(file: File): { ok: true } | { ok: false; error: st
   return { ok: true };
 }
 
-export async function saveUploadedImage(file: File): Promise<string> {
-  const v = validateImage(file);
-  if (!v.ok) throw new Error(v.error);
-
-  const buffer = Buffer.from(await file.arrayBuffer());
+/** Sniff bytes and cross-check optional declared MIME (e.g. `File.type` or `Content-Type`). */
+export function assertProductImageBytes(
+  buffer: Buffer,
+  claimedMime: string,
+): SniffedKind {
+  if (buffer.length > MAX_IMAGE_BYTES) {
+    throw new Error("Image must be 8 MB or smaller.");
+  }
   const sniffed = sniffImageKind(buffer);
   if (!sniffed) {
     throw new Error(
       "Could not read this image. Use JPEG or PNG, or re-save the photo (HEIC is not supported).",
     );
   }
-
-  const claimed = (file.type || "").toLowerCase();
+  const claimed = claimedMime.toLowerCase().split(";")[0]?.trim() ?? "";
   if (
     claimed &&
     claimed !== "application/octet-stream" &&
@@ -106,16 +151,66 @@ export async function saveUploadedImage(file: File): Promise<string> {
   ) {
     throw new Error("Only JPEG, PNG, GIF, or WebP images are allowed.");
   }
+  return sniffed;
+}
 
-  const id = crypto.randomUUID();
-  const filename = `${id}${extForKind(sniffed)}`;
+/**
+ * Stores validated image bytes in Vercel Blob (when configured) or under `public/uploads/`.
+ * Call `assertProductImageBytes` first. Returns a basename or `blob:me5a-product-images/…`.
+ */
+export async function persistProductImageFromBuffer(
+  buffer: Buffer,
+  sniffed: SniffedKind,
+): Promise<string> {
+  const ext = extForKind(sniffed);
+  const mime = mimeForKind(sniffed);
+
+  if (hasBlobTokenForProductImages()) {
+    const pathname = `${PRODUCT_IMAGE_BLOB_PREFIX}/${crypto.randomUUID()}${ext}`;
+    await put(pathname, buffer, {
+      access: "private",
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      contentType: mime,
+    });
+    return storedRefFromBlobPathname(pathname);
+  }
+
   await fs.mkdir(UPLOAD_DIR, { recursive: true });
-  await fs.writeFile(path.join(UPLOAD_DIR, filename), buffer);
+  const filename = `${crypto.randomUUID()}${ext}`;
+  try {
+    await fs.writeFile(path.join(UPLOAD_DIR, filename), buffer);
+  } catch {
+    throw new Error(
+      "Cannot save image on this host (filesystem is read-only). Connect Vercel Blob (BLOB_READ_WRITE_TOKEN) or upload from a machine with a writable disk.",
+    );
+  }
   return filename;
 }
 
+export async function saveUploadedImage(file: File): Promise<string> {
+  const v = validateImage(file);
+  if (!v.ok) throw new Error(v.error);
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const sniffed = assertProductImageBytes(buffer, file.type || "");
+  return persistProductImageFromBuffer(buffer, sniffed);
+}
+
 export async function removeImageFile(filename: string): Promise<void> {
-  if (!filename || filename.includes("..") || filename.includes("/")) return;
+  if (!filename) return;
+  const pathname = blobPathnameFromStoredRef(filename);
+  if (pathname) {
+    try {
+      await del(pathname);
+    } catch {
+      /* ignore */
+    }
+    return;
+  }
+  if (filename.includes("..") || filename.includes("/") || filename.includes(":")) {
+    return;
+  }
   const full = path.join(UPLOAD_DIR, filename);
   try {
     await fs.unlink(full);

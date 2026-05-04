@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { readCategories } from "@/lib/categories";
 import { ADMIN_COOKIE, verifySession } from "@/lib/admin-session";
 import { getCookieValue } from "@/lib/cookies";
-import { removeImageFile, saveUploadedImage } from "@/lib/image-upload";
+import {
+  removeImageFile,
+  saveUploadedImage,
+  storedRefFromBlobPathname,
+  verifyUploadedProductBlobPathname,
+} from "@/lib/image-upload";
 import {
   deleteProduct,
   getProductById,
@@ -46,6 +51,7 @@ export async function PATCH(request: Request, ctx: Ctx) {
   const featuredRaw = formData.get("featured");
   const newArrivalRaw = formData.get("newArrival");
   const categoryRaw = formData.get("categoryId");
+  const imagePathnameRaw = formData.get("imagePathname");
   const file = formData.get("image");
 
   const patch: Partial<{
@@ -103,7 +109,18 @@ export async function PATCH(request: Request, ctx: Ctx) {
     patch.categoryId = cid;
   }
 
-  if (file instanceof File && file.size > 0) {
+  if (typeof imagePathnameRaw === "string" && imagePathnameRaw.trim()) {
+    const pathname = imagePathnameRaw.trim();
+    if (!(await verifyUploadedProductBlobPathname(pathname))) {
+      return NextResponse.json(
+        { error: "Invalid or missing uploaded image." },
+        { status: 400 },
+      );
+    }
+    const old = existing.imageFilename;
+    patch.imageFilename = storedRefFromBlobPathname(pathname);
+    await removeImageFile(old);
+  } else if (file instanceof File && file.size > 0) {
     let newName: string;
     try {
       newName = await saveUploadedImage(file);
@@ -116,8 +133,16 @@ export async function PATCH(request: Request, ctx: Ctx) {
     await removeImageFile(old);
   }
 
-  const product = await updateProduct(id, patch);
-  return NextResponse.json({ ok: true, product });
+  try {
+    const product = await updateProduct(id, patch);
+    return NextResponse.json({ ok: true, product });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Save failed." },
+      { status: 500 },
+    );
+  }
 }
 
 export async function DELETE(_request: Request, ctx: Ctx) {
@@ -128,10 +153,18 @@ export async function DELETE(_request: Request, ctx: Ctx) {
   if (!verifySession(token)) return unauthorized();
 
   const { id } = await ctx.params;
-  const removed = await deleteProduct(id);
-  if (!removed) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  try {
+    const removed = await deleteProduct(id);
+    if (!removed) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    await removeImageFile(removed.imageFilename);
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Save failed." },
+      { status: 500 },
+    );
   }
-  await removeImageFile(removed.imageFilename);
-  return NextResponse.json({ ok: true });
 }
