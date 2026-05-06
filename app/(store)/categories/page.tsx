@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import { readCategories } from "@/lib/categories";
 import { readProducts } from "@/lib/products";
 import { CategoriesHeader } from "./CategoriesHeader";
 import { CategoriesGrid } from "./CategoriesGrid";
+
+export const metadata: Metadata = {
+  title: "Categories",
+  description: "Explore product categories available on yassinfashion.",
+  alternates: {
+    canonical: "/categories",
+  },
+};
 
 export default async function CategoriesPage() {
   const categories = await readCategories();

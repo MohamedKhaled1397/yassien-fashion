@@ -5,6 +5,7 @@ import {
   Noto_Sans_Arabic,
 } from "next/font/google";
 import { StoreProviders } from "@/components/StoreProviders";
+import { BRAND_NAME, getSiteUrl, SITE_DESCRIPTION, SITE_TITLE } from "@/lib/seo";
 import "./globals.css";
 
 const serif = Cormorant_Garamond({
@@ -28,8 +29,36 @@ const arabic = Noto_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "Yassin Fashion",
-  description: "Curated apparel and accessories — elevated everyday style.",
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: SITE_TITLE,
+    template: `%s | ${SITE_TITLE}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_TITLE,
+  keywords: [
+    "yassinfashion",
+    "Yassin Fashion",
+    "ياسين فاشون",
+    "fashion store",
+    "new arrivals",
+    "online shopping",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: SITE_TITLE,
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: `${SITE_DESCRIPTION} #${BRAND_NAME}`,
+  },
 };
 
 export default function RootLayout({

@@ -1,10 +1,49 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCategoryById } from "@/lib/categories";
 import { productImageSrc } from "@/lib/product-image-url";
 import { getProductById } from "@/lib/products";
 import { getWhatsAppStoreContext } from "@/lib/store-whatsapp-context";
 import { ProductDetailClient } from "./ProductDetailClient";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const product = await getProductById(id);
+  if (!product) {
+    return {
+      title: "Product Not Found",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  return {
+    title: product.name,
+    description: product.description.slice(0, 160),
+    alternates: {
+      canonical: `/product/${product.id}`,
+    },
+    openGraph: {
+      title: product.name,
+      description: product.description.slice(0, 160),
+      type: "website",
+      url: `/product/${product.id}`,
+      images: [
+        {
+          url: productImageSrc(product.imageFilename),
+          alt: product.name,
+        },
+      ],
+    },
+  };
+}
 
 export default async function ProductPage({
   params,

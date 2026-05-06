@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import { categoryLabelMap, readCategories } from "@/lib/categories";
 import { ProductGrid } from "@/components/ProductGrid";
 import { readProducts } from "@/lib/products";
 import { getWhatsAppStoreContext } from "@/lib/store-whatsapp-context";
 import { NewArrivalsHeader } from "./NewArrivalsHeader";
+
+export const metadata: Metadata = {
+  title: "New Arrivals",
+  description:
+    "See the latest new arrivals and trending styles on yassinfashion.",
+  alternates: {
+    canonical: "/new-arrivals",
+  },
+};
 
 export default async function NewArrivalsPage() {
   const categories = await readCategories();

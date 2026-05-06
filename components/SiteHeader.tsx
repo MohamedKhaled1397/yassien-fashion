@@ -68,12 +68,6 @@ export function SiteHeader({ social }: { social: SiteSocial }) {
           >
             {lang === "en" ? "AR" : "EN"}
           </button>
-          <Link
-            href="/admin"
-            className="text-xs font-medium uppercase tracking-widest text-stone-500 underline-offset-4 hover:text-stone-900 hover:underline dark:text-stone-400 dark:hover:text-stone-100"
-          >
-            {t.admin}
-          </Link>
         </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-stone-100 px-4 py-2 md:hidden dark:border-stone-900">

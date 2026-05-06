@@ -1,9 +1,19 @@
+import type { Metadata } from "next";
 import { categoryLabelMap, readCategories } from "@/lib/categories";
 import { ProductGrid } from "@/components/ProductGrid";
 import { HeroSection } from "@/components/HeroSection";
 import { readProducts } from "@/lib/products";
 import { getWhatsAppStoreContext } from "@/lib/store-whatsapp-context";
 import { FeaturedHeading } from "./FeaturedHeading";
+
+export const metadata: Metadata = {
+  title: "Home",
+  description:
+    "Discover featured picks and signature looks from yassinfashion.",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default async function HomePage() {
   const categories = await readCategories();

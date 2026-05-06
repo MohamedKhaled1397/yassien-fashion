@@ -1,8 +1,18 @@
+import type { Metadata } from "next";
 import { categoryLabelMap, readCategories } from "@/lib/categories";
 import { ProductGrid } from "@/components/ProductGrid";
 import { readProducts, sortProductsList, type ProductSort } from "@/lib/products";
 import { getWhatsAppStoreContext } from "@/lib/store-whatsapp-context";
 import { ShopToolbar } from "./ShopToolbar";
+
+export const metadata: Metadata = {
+  title: "Shop",
+  description:
+    "Browse all products on yassinfashion and filter by category or sort.",
+  alternates: {
+    canonical: "/shop",
+  },
+};
 
 export default async function ShopPage({
   searchParams,
